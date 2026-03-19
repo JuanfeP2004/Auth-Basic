@@ -1,5 +1,5 @@
-CREATE LOGIN app_login WITH PASSWORD = 'p4sSw0rd' 
-MUST_CHANGE, CHECK_EXPIRATION=ON;
+CREATE LOGIN app_login WITH PASSWORD = 'your_new_password';
+GRANT CONNECT SQL TO app_login;
 
 CREATE DATABASE AuthRegistry;
 USE AuthRegistry;
@@ -16,12 +16,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON OBJECT::dbo.UserResetCodes TO auth_app_l
 
 CREATE TABLE dbo.Logs(
     log_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
+    log_uuid uniqueidentifier NOT NULL DEFAULT NEWID(),
     log_text varchar(100) NOT NULL,
     log_date datetime NOT NULL
 );
 CREATE TABLE dbo.Roles(
-    rol_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
-    rol_name varchar(20) NOT NULL
+    role_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
+    role_name varchar(20) NOT NULL
 );
 CREATE TABLE dbo.Factors(
     factor_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
@@ -41,7 +42,7 @@ CREATE TABLE dbo.Users(
 );
 CREATE TABLE dbo.UserRoles(
     user_id int FOREIGN KEY REFERENCES Users(user_id) NOT NULL,
-    rol_id int FOREIGN KEY REFERENCES Roles(rol_id) NOT NULL
+    role_id int FOREIGN KEY REFERENCES Roles(role_id) NOT NULL
 );
 CREATE TABLE dbo.UserTokens(
     token_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
@@ -57,7 +58,7 @@ CREATE TABLE dbo.UserResetCodes(
     expires datetime NOT NULL,
     used bit NOT NULL DEFAULT 0
 );
-INSERT dbo.Roles(rol_name) VALUES 
+INSERT dbo.Roles(role_name) VALUES 
     ('GiveRole'), ('RemoveRole'), ('ReadLogs'), ('LockUser'), ('UnlockUser'),
     ('Role1'), ('Role2'), ('Role3');
 
