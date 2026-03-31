@@ -10,6 +10,8 @@ public class AuthDBContext : DbContext
     public DbSet<UserRoles> UsersRoles {get; set;}
     public DbSet<Log> Logs {get; set;}
 
+    public DbSet<Factor> Factors {get; set;}
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
