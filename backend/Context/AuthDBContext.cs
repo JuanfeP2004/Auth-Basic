@@ -9,4 +9,10 @@ public class AuthDBContext : DbContext
     public DbSet<User> Users {get; set;}
     public DbSet<UserRoles> UsersRoles {get; set;}
     public DbSet<Log> Logs {get; set;}
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<User>().ToTable("Users").HasNoKey();
+    }
 }
