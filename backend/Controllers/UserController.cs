@@ -68,7 +68,7 @@ public class UserController : ControllerBase
 
             return Created();
         }
-        catch (Exception e)
+        catch
         {
             return StatusCode(500);
         }

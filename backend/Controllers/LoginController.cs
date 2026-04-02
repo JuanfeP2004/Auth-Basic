@@ -17,18 +17,29 @@ public class LoginController : ControllerBase
     [HttpPost("auth")]
     public async Task<ActionResult> Login([FromBody] Credentials body)
     {
-        if(body == null)
-            return BadRequest();
+        try
+        {
+            if(body == null)
+                return BadRequest();
+            if(!Utility.ValidateString(body.email))
+                return BadRequest();
+            if(!Utility.ValidateString(body.password))
+                return BadRequest();
 
-        User user = await _context.Users.SingleAsync(p => p.email == body.email);
-        if(user == null) return Unauthorized();
+            User? user = await _context.Users.SingleOrDefaultAsync(p => p.email == body.email);
+            if(user == null) return NotFound();
 
-        if(!user.is_active) return NotFound();
+            if(!user.is_active) return NotFound();
 
-        if(!Sha256Encrypt(body.password, user.salt_char).Equals(user.password_hash))
-            return NotFound();
+            if(!Utility.Sha256Encrypt(body.password, user.salt_char).Equals(user.password_hash))
+                return NotFound();
 
-        return Ok(user);
+            return Ok(user); 
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
     }
 
     [HttpPost("send2fa")]
@@ -47,20 +58,6 @@ public class LoginController : ControllerBase
     public async Task<ActionResult> Refresh()
     {
         return BadRequest();
-    }
-
-    string Sha256Encrypt(string password, string salt)
-    {
-        string raw_string = salt + password;
-        using(SHA256 sha256 = SHA256.Create())
-        {
-            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(raw_string));
-            StringBuilder result = new StringBuilder();
-            foreach(byte i in bytes)
-                result.Append(i.ToString("x2"));
-
-            return result.ToString();
-        }
     }
 
     string SendSMS()
