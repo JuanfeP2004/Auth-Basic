@@ -11,6 +11,8 @@ public class UserController : ControllerBase
     private readonly AuthDBContext _context;
     private const int minimum_lenght = 8;
     private const int salt_length = 16;
+    private const string email_pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+    private const string phone_pattern = @"^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$";
 
     public UserController(AuthDBContext context)
     {
@@ -18,7 +20,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("")]
-    public async Task<ActionResult> Create([FromBody] UserTemplate user_template)
+    public async Task<ActionResult> Create([FromBody] UserTemplate? user_template)
     {
         try
         {
@@ -34,8 +36,13 @@ public class UserController : ControllerBase
             if(!Utility.ValidateString(user_template.phone))
                 return BadRequest();
             if(!Utility.ValidateString(user_template.second_factor))
-                return BadRequest();
+                return BadRequest("Password too short");
 
+            if(!Regex.IsMatch(user_template.email, email_pattern))
+                return BadRequest("Bad format email");
+            else if(!Regex.IsMatch(user_template.phone, phone_pattern))
+                return BadRequest("Bad format phone");
+            
             if(user_template.password.Length < minimum_lenght)
                 return BadRequest("Password too short");
 
@@ -50,27 +57,19 @@ public class UserController : ControllerBase
                 return BadRequest();
 
             string salt = Utility.GenerateSafeString(salt_length);
-            System.Console.WriteLine(salt);
             string password = Utility.Sha256Encrypt(user_template.password, salt);
-            System.Console.WriteLine(password);
 
-            var new_user = new User
-            {
-                name_user = user_template.name,
-                email = user_template.email,
-                phone = user_template.phone,
-                password_hash = user_template.password,
-                second_auth = factor.factor_id
-            };
-
-            //await _context.Users.AddAsync(new_user);
-            //await _context.SaveChangesAsync();
+            var rows_affected = await _context.Database.ExecuteSqlAsync(
+                $"INSERT dbo.Users (name_user, email, phone, password_hash, salt_char, second_auth) VALUES ({user_template.name}, {user_template.email}, {user_template.phone}, {password}, {salt}, {factor.factor_id})");
+            
+            if(rows_affected == 1)
+                await _context.SaveChangesAsync();
+            else throw new Exception("Something went worng");
 
             return Created();
         }
         catch (Exception e)
         {
-            System.Console.WriteLine(e.ToString());
             return StatusCode(500);
         }
     }

@@ -4,7 +4,7 @@ using System.Text;
 public class Utility
 {
     static RandomNumberGenerator random = RandomNumberGenerator.Create();
-    public static bool ValidateString(string data)
+    public static bool ValidateString(string? data)
     {
         if(data == null || data.IsWhiteSpace())
             return false;
