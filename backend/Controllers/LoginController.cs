@@ -8,10 +8,15 @@ using System.Text;
 public class LoginController : ControllerBase
 {
     private readonly AuthDBContext _context;
+    private readonly EmailContext _email;
 
-    public LoginController(AuthDBContext context)
+    private readonly TimeSpan code_time = new TimeSpan(0, 5, 0);
+    private readonly TimeSpan refresh_token_time = new TimeSpan(0, 15, 0);
+    private readonly TimeSpan token_time = new TimeSpan(0, 30, 0);
+    public LoginController(AuthDBContext context, EmailContext email)
     {
         _context = context;
+        _email = email;
     }
 
     [HttpPost("auth")]
@@ -22,19 +27,43 @@ public class LoginController : ControllerBase
             if(body == null)
                 return BadRequest();
             if(!Utility.ValidateString(body.email))
-                return BadRequest();
+                return BadRequest(new Response(){Text="Email isn't present"});
             if(!Utility.ValidateString(body.password))
-                return BadRequest();
+                return BadRequest(new Response(){Text="Password isn't present"});
 
             User? user = await _context.Users.SingleOrDefaultAsync(p => p.email == body.email);
-            if(user == null) return NotFound();
+            if(user == null) return NotFound(new Response(){Text="Incorrect user"});
 
-            if(!user.is_active) return NotFound();
+            if(!user.is_active) return NotFound(new Response(){Text="User is locked"});
 
             if(!Utility.Sha256Encrypt(body.password, user.salt_char).Equals(user.password_hash))
-                return NotFound();
+                return NotFound(new Response(){Text="Incorrect password"});
 
-            return Ok(user); 
+            string code = Utility.GenerateSafeCode(6);
+            string subject = "Authetication code";
+            string message = $"Your code to authenticate in auth basic is: {code}";
+
+            //System.Console.WriteLine(code);
+            //System.Console.WriteLine(Utility.AddTime(code_time));
+
+            var rows_affected = await _context.Database.ExecuteSqlAsync(
+                $"INSERT dbo.SecondFactorCodes (user_id, code, expires) VALUES ({user.user_id}, {code}, {Utility.AddTime(code_time)})");
+
+            if(rows_affected != 1)
+                throw new Exception("Error generating the code");
+
+            switch (user.second_auth)
+            {
+                case 1:
+                    return BadRequest();
+                case 2:
+                    bool result = await _email.SendEmailAsync(user.email, subject, message);
+                    if(!result)
+                        throw new Exception("Fail Sending the email");
+                    return Ok(new Response(){Text = "It was sent a message to your email with the code, check it."});
+                default:
+                    throw new Exception("Don't exists an 2fa");
+            } 
         }
         catch
         {
@@ -45,6 +74,8 @@ public class LoginController : ControllerBase
     [HttpPost("send2fa")]
     public async Task<ActionResult> SecondFactor()
     {
+
+
         return BadRequest();
     }
 
@@ -58,15 +89,5 @@ public class LoginController : ControllerBase
     public async Task<ActionResult> Refresh()
     {
         return BadRequest();
-    }
-
-    string SendSMS()
-    {
-        return "";
-    }
-
-    string SendEmail()
-    {
-        return "";
     }
 }

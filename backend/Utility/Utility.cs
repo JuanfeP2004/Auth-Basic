@@ -10,6 +10,12 @@ public class Utility
             return false;
         return true;
     }
+    
+    public static DateTime AddTime(TimeSpan time)
+    {
+        DateTime now = DateTime.Now;
+        return now.Add(time);
+    }
     public static string Sha256Encrypt(string password, string salt)
     {
         string raw_string = salt + password;
@@ -33,6 +39,21 @@ public class Utility
         for(int i = 0; i < length; i++)
         {
             bytes[i] = (byte)(((double)bytes[i]/256 * 93)+33);
+            s.Append(Convert.ToChar(bytes[i]));
+        }
+
+        return s.ToString();
+    }
+
+    public static string GenerateSafeCode(int length)
+    {
+        byte[] bytes = new byte[length];
+        StringBuilder s = new StringBuilder();
+        random.GetBytes(bytes);
+
+        for(int i = 0; i < length; i++)
+        {
+            bytes[i] = (byte)(((double)bytes[i]/256 * 10)+48);
             s.Append(Convert.ToChar(bytes[i]));
         }
 

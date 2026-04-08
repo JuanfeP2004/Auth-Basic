@@ -15,6 +15,6 @@ public class AuthDBContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<User>().ToTable("Users").HasNoKey();
+        //modelBuilder.Entity<User>().ToTable("Users").HasNoKey();
     }
 }

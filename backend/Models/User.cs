@@ -1,7 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
 public class User
 {
+    [Key]
+    public int user_id {get; set;}
     public Guid uuid {get; set;}
     public string? name_user {get; set;}
     public string? email {get; set;}
