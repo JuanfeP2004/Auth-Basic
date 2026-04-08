@@ -59,7 +59,6 @@ CREATE TABLE dbo.UserResetCodes(
     code varchar(6) NOT NULL,
     expires datetime NOT NULL,
     used bit NOT NULL DEFAULT 0,
-    times_used tinyint NOT NULL DEFAULT 0
 );
 
 CREATE TABLE dbo.SecondFactorCodes(
@@ -68,7 +67,6 @@ CREATE TABLE dbo.SecondFactorCodes(
     code varchar(6) NOT NULL,
     expires datetime NOT NULL,
     used bit NOT NULL DEFAULT 0,
-    times_used tinyint NOT NULL DEFAULT 0
 );
 
 INSERT dbo.Roles(role_name) VALUES 
