@@ -13,6 +13,7 @@ GRANT SELECT, INSERT, UPDATE ON OBJECT::dbo.Users TO auth_app_login;
 GRANT SELECT, INSERT, DELETE ON OBJECT::dbo.UserRoles TO auth_app_login;
 GRANT SELECT, INSERT, UPDATE, DELETE ON OBJECT::dbo.UserTokens TO auth_app_login;
 GRANT SELECT, INSERT, UPDATE, DELETE ON OBJECT::dbo.UserResetCodes TO auth_app_login;
+GRANT SELECT, INSERT, UPDATE, DELETE ON OBJECT::dbo.SecondFactorCodes TO auth_app_login;
 
 CREATE TABLE dbo.Logs(
     log_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
@@ -48,16 +49,28 @@ CREATE TABLE dbo.UserTokens(
     token_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
     user_id int FOREIGN KEY REFERENCES Users(user_id) NOT NULL,
     token_hash varchar(64) NOT NULL,
+    refresh datetime NOT NULL,
     expires datetime NOT NULL,
     revoked bit NOT NULL DEFAULT 0
 );
 CREATE TABLE dbo.UserResetCodes(
     code_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
     user_id int FOREIGN KEY REFERENCES Users(user_id) NOT NULL,
-    code_hash varchar(64) NOT NULL,
+    code varchar(6) NOT NULL,
     expires datetime NOT NULL,
-    used bit NOT NULL DEFAULT 0
+    used bit NOT NULL DEFAULT 0,
+    times_used tinyint NOT NULL DEFAULT 0
 );
+
+CREATE TABLE dbo.SecondFactorCodes(
+    code_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
+    user_id int FOREIGN KEY REFERENCES Users(user_id) NOT NULL,
+    code varchar(6) NOT NULL,
+    expires datetime NOT NULL,
+    used bit NOT NULL DEFAULT 0,
+    times_used tinyint NOT NULL DEFAULT 0
+);
+
 INSERT dbo.Roles(role_name) VALUES 
     ('GiveRole'), ('RemoveRole'), ('ReadLogs'), ('LockUser'), ('UnlockUser'),
     ('Role1'), ('Role2'), ('Role3');
