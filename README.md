@@ -7,8 +7,8 @@ This project is an experiment to test the creation of a Schema of Authentication
 The project was made with the .NET framework in mind, for this many of this stack was meant to have good integration with this aprroach, the technologies used are the following:
 
 * C# 10 (ASP.NET): the backend of the service
-* Microsoft SQL Server 2025:
-* React.js: a popular framework
+* Microsoft SQL Server 2025: database (put in a docker container)
+* React.js: a popular front end framework
 
 (Note that the main emphasis will be put in the backend part, while the others will be more basic/straightfoward)
 
@@ -41,6 +41,10 @@ The proyect also have a registry of logs to track the system, the following are 
 * User #### request recovery code
 * User #### was granted ####
 * User #### was removed ####
+
+## Architecture
+The following is the architecture of the database:
+(https://drive.google.com/file/d/192o3dTGmEz4rTVbWOoa8zVwML1VztGdV/view?usp=sharing)
 
 ## Instalation & Deployment
 (In progress)

@@ -49,7 +49,6 @@ CREATE TABLE dbo.UserTokens(
     token_id int IDENTITY(1,1) PRIMARY KEY NOT NULL,
     user_id int FOREIGN KEY REFERENCES Users(user_id) NOT NULL,
     token_hash varchar(64) NOT NULL,
-    refresh datetime NOT NULL,
     expires datetime NOT NULL,
     revoked bit NOT NULL DEFAULT 0
 );
