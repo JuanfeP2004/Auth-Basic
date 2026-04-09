@@ -10,13 +10,15 @@ public class LoginController : ControllerBase
     private readonly AuthDBContext _context;
     private readonly EmailContext _email;
 
+    private readonly AuthBasic _auth;
+
     private readonly TimeSpan code_time = new TimeSpan(0, 60, 0);
-    private readonly TimeSpan refresh_token_time = new TimeSpan(1, 0, 0);
-    private readonly TimeSpan expire_token_time = new TimeSpan(24, 0, 0);
-    public LoginController(AuthDBContext context, EmailContext email)
+    private readonly TimeSpan expire_token_time = new TimeSpan(0, 60, 0);
+    public LoginController(AuthDBContext context, EmailContext email, AuthBasic auth)
     {
         _context = context;
         _email = email;
+        _auth = auth;
     }
 
     [HttpPost("auth")]
@@ -97,12 +99,11 @@ public class LoginController : ControllerBase
             {
                 user_id = user.user_id,
                 token_hash = token_hash,
-                refresh = Utility.AddTime(refresh_token_time),
                 expires = Utility.AddTime(expire_token_time)
             };
 
             await _context.UserTokens.AddAsync(new_token);
-            await _context.SecondFactorCodes.Where(p => p.code == body.text && p.user_id == user.user_id).
+            await _context.SecondFactorCodes.Where(p => p.code_id == factor.code_id).
             ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
             await _context.SaveChangesAsync();
 
@@ -126,15 +127,28 @@ public class LoginController : ControllerBase
         }
     }
 
-    [HttpPost("logout")]
-    public async Task<ActionResult> Logout()
+    [HttpDelete("logout/{uuid:Guid}")]
+    public async Task<ActionResult> Logout(Guid uuid)
     {
-        return BadRequest();
-    }
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            if(!Utility.ValidateString(token_code))
+                return BadRequest();
+            UserToken? token = await _auth.AutheticateUser(_context, token_code, uuid);
+            if(token == null)
+                return Unauthorized();
 
-    [HttpPost("refresh")]
-    public async Task<ActionResult> Refresh()
-    {
-        return BadRequest();
+            await _context.UserTokens.Where(p => p.token_id == token.token_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.revoked, e => true));
+            await _context.SaveChangesAsync();
+
+            return NoContent();       
+        }
+        catch(Exception e)
+        {
+            System.Console.WriteLine(e);
+            return StatusCode(500);
+        }
     }
 }
