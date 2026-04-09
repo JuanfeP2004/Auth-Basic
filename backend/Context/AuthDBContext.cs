@@ -11,6 +11,8 @@ public class AuthDBContext : DbContext
     public DbSet<Log> Logs {get; set;}
 
     public DbSet<Factor> Factors {get; set;}
+    public DbSet<SecondFactorCode> SecondFactorCodes {get; set;}
+    public DbSet<UserToken> UserTokens {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

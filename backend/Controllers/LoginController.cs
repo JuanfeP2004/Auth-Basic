@@ -10,9 +10,9 @@ public class LoginController : ControllerBase
     private readonly AuthDBContext _context;
     private readonly EmailContext _email;
 
-    private readonly TimeSpan code_time = new TimeSpan(0, 5, 0);
-    private readonly TimeSpan refresh_token_time = new TimeSpan(0, 15, 0);
-    private readonly TimeSpan token_time = new TimeSpan(0, 30, 0);
+    private readonly TimeSpan code_time = new TimeSpan(0, 60, 0);
+    private readonly TimeSpan refresh_token_time = new TimeSpan(1, 0, 0);
+    private readonly TimeSpan expire_token_time = new TimeSpan(24, 0, 0);
     public LoginController(AuthDBContext context, EmailContext email)
     {
         _context = context;
@@ -43,11 +43,8 @@ public class LoginController : ControllerBase
             string subject = "Authetication code";
             string message = $"Your code to authenticate in auth basic is: {code}";
 
-            //System.Console.WriteLine(code);
-            //System.Console.WriteLine(Utility.AddTime(code_time));
-
             var rows_affected = await _context.Database.ExecuteSqlAsync(
-                $"INSERT dbo.SecondFactorCodes (user_id, code, expires) VALUES ({user.user_id}, {code}, {Utility.AddTime(code_time)})");
+                $"INSERT dbo.SecondFactorCodes (user_id, code, expires) VALUES ({user.user_id}, {code}, {Utility.AddTime(code_time)});");
 
             if(rows_affected != 1)
                 throw new Exception("Error generating the code");
@@ -60,7 +57,7 @@ public class LoginController : ControllerBase
                     bool result = await _email.SendEmailAsync(user.email, subject, message);
                     if(!result)
                         throw new Exception("Fail Sending the email");
-                    return Ok(new Response(){Text = "It was sent a message to your email with the code, check it."});
+                    return Ok(new GuidBody(){guid = user.uuid, text = "It was sent a message to your email with the code, check it."});
                 default:
                     throw new Exception("Don't exists an 2fa");
             } 
@@ -72,11 +69,61 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost("send2fa")]
-    public async Task<ActionResult> SecondFactor()
+    public async Task<ActionResult> SecondFactor([FromBody] GuidBody body)
     {
+        try
+        {          
+            if(body == null)
+                return BadRequest();
+            if(!Utility.ValidateString(body.text))
+                return BadRequest(new Response() { Text = "Isn't a code"});
 
+            User? user = await _context.Users.FirstOrDefaultAsync(p => p.uuid == body.guid);
 
-        return BadRequest();
+            if(user == null)
+                return NotFound();
+
+            SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
+                p => p.code == body.text && p.user_id == user.user_id
+                && !p.used && p.expires < DateTime.Now);
+
+            if (factor == null)
+                return NotFound();
+
+            string token_code = Utility.GenerateSafeString(24);
+            string token_hash = Utility.Sha256Encrypt(token_code);
+
+            UserToken new_token = new UserToken()
+            {
+                user_id = user.user_id,
+                token_hash = token_hash,
+                refresh = Utility.AddTime(refresh_token_time),
+                expires = Utility.AddTime(expire_token_time)
+            };
+
+            await _context.UserTokens.AddAsync(new_token);
+            await _context.SecondFactorCodes.Where(p => p.code == body.text && p.user_id == user.user_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
+            await _context.SaveChangesAsync();
+
+            ReturnUser response = new ReturnUser()
+            {
+                uuid = user.uuid,
+                name_user = user.name_user,
+                email = user.email,
+                phone = user.phone,
+                is_active = user.is_active,
+                created_at = user.created_at,
+                token = token_code
+            };
+
+            return Ok(response);
+        }
+        catch (Exception e)
+        {
+            System.Console.WriteLine(e);
+            return StatusCode(500);
+        }
     }
 
     [HttpPost("logout")]

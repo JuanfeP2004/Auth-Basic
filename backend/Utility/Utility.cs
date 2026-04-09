@@ -30,6 +30,21 @@ public class Utility
         }
     }
 
+    public static string Sha256Encrypt(string password)
+    {
+        string raw_string = password;
+        using(SHA256 sha256 = SHA256.Create())
+        {
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(raw_string));
+            StringBuilder result = new StringBuilder();
+            foreach(byte i in bytes)
+                result.Append(i.ToString("x2"));
+
+            return result.ToString();
+        }
+    }
+
+
     public static string GenerateSafeString(int length)
     {
         byte[] bytes = new byte[length];
