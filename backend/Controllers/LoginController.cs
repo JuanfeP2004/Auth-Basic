@@ -7,6 +7,7 @@ using System.Text;
 [Route("authapp/v1/[controller]")]
 public class LoginController : ControllerBase
 {
+    private const int minimum_lenght = 8;
     private readonly AuthDBContext _context;
     private readonly EmailContext _email;
 
@@ -201,7 +202,7 @@ public class LoginController : ControllerBase
             return StatusCode(500);
         }
     }
-    /*
+    
     [HttpPost("resetpassword")]
     public async Task<ActionResult> SendResetCode([FromBody] ResetBody body)
     {
@@ -210,47 +211,33 @@ public class LoginController : ControllerBase
             if(body == null)
                 return BadRequest();
             if(!Utility.ValidateString(body.code))
-                return BadRequest(new OneText() { Text = "Isn't a code"});
+                return BadRequest(new OneText() { Text = "Code isn't present"});
+            if(!Utility.ValidateString(body.password))
+                return BadRequest(new OneText(){Text="Password isn't present"});
+            if(body.password.Length < minimum_lenght)
+                return BadRequest(new OneText() {Text = "Password is too short"});
 
             User? user = await _context.Users.FirstOrDefaultAsync(p => p.uuid == body.guid);
 
             if(user == null)
                 return NotFound();
 
-            SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
-                p => p.code == body.text && p.user_id == user.user_id
+            ResetCode? reset_code = await _context.UserResetCodes.FirstOrDefaultAsync(
+                p => p.code == body.code && p.user_id == user.user_id
                 && !p.used && p.expires < DateTime.Now);
 
-            if (factor == null)
+            if (reset_code == null)
                 return NotFound();
 
-            string token_code = Utility.GenerateSafeString(24);
-            string token_hash = Utility.Sha256Encrypt(token_code);
+            string password_hash = Utility.Sha256Encrypt(body.password, user.salt_char);
 
-            UserToken new_token = new UserToken()
-            {
-                user_id = user.user_id,
-                token_hash = token_hash,
-                expires = Utility.AddTime(expire_token_time)
-            };
-
-            await _context.UserTokens.AddAsync(new_token);
-            await _context.SecondFactorCodes.Where(p => p.code_id == factor.code_id).
+            await _context.Users.Where(p => p.user_id == user.user_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.password_hash, e => password_hash));
+            await _context.UserResetCodes.Where(p => p.code_id == reset_code.code_id).
             ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
             await _context.SaveChangesAsync();
 
-            ReturnUser response = new ReturnUser()
-            {
-                uuid = user.uuid,
-                name_user = user.name_user,
-                email = user.email,
-                phone = user.phone,
-                is_active = user.is_active,
-                created_at = user.created_at,
-                token = token_code
-            };
-
-            return Ok(response);
+            return Ok(new OneText(){Text="Password has been changed"});
         }
         catch(Exception e)
         {
@@ -258,5 +245,4 @@ public class LoginController : ControllerBase
             return StatusCode(500);
         }
     }
-*/
 }
