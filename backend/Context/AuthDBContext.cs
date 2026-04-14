@@ -9,9 +9,9 @@ public class AuthDBContext : DbContext
     public DbSet<User> Users {get; set;}
     public DbSet<UserRoles> UsersRoles {get; set;}
     public DbSet<Log> Logs {get; set;}
-
     public DbSet<Factor> Factors {get; set;}
     public DbSet<SecondFactorCode> SecondFactorCodes {get; set;}
+    public DbSet<ResetCode> UserResetCodes {get; set;}
     public DbSet<UserToken> UserTokens {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

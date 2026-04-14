@@ -29,17 +29,17 @@ public class LoginController : ControllerBase
             if(body == null)
                 return BadRequest();
             if(!Utility.ValidateString(body.email))
-                return BadRequest(new Response(){Text="Email isn't present"});
+                return BadRequest(new OneText(){Text="Email isn't present"});
             if(!Utility.ValidateString(body.password))
-                return BadRequest(new Response(){Text="Password isn't present"});
+                return BadRequest(new OneText(){Text="Password isn't present"});
 
             User? user = await _context.Users.SingleOrDefaultAsync(p => p.email == body.email);
-            if(user == null) return NotFound(new Response(){Text="Incorrect user"});
+            if(user == null) return NotFound(new OneText(){Text="Incorrect user"});
 
-            if(!user.is_active) return NotFound(new Response(){Text="User is locked"});
+            if(!user.is_active) return NotFound(new OneText(){Text="User is locked"});
 
             if(!Utility.Sha256Encrypt(body.password, user.salt_char).Equals(user.password_hash))
-                return NotFound(new Response(){Text="Incorrect password"});
+                return NotFound(new OneText(){Text="Incorrect password"});
 
             string code = Utility.GenerateSafeCode(6);
             string subject = "Authetication code";
@@ -78,7 +78,7 @@ public class LoginController : ControllerBase
             if(body == null)
                 return BadRequest();
             if(!Utility.ValidateString(body.text))
-                return BadRequest(new Response() { Text = "Isn't a code"});
+                return BadRequest(new OneText() { Text = "Isn't a code"});
 
             User? user = await _context.Users.FirstOrDefaultAsync(p => p.uuid == body.guid);
 
@@ -151,4 +151,112 @@ public class LoginController : ControllerBase
             return StatusCode(500);
         }
     }
+
+    [HttpPost("sendresetcode")]
+    public async Task<ActionResult> CreateResetCode([FromBody] OneText body)
+    {
+        try
+        {
+            if(body == null)
+                return BadRequest();
+            if(!Utility.ValidateString(body.Text))
+                return BadRequest(new OneText() { Text = "Isn't a code"});
+
+            User? user = await _context.Users.FirstOrDefaultAsync(p => p.email == body.Text);
+
+            if(user == null)
+                return NotFound();          
+
+            string code = Utility.GenerateSafeCode(6);
+
+            ResetCode new_code = new ResetCode()
+            {
+                user_id = user.user_id,
+                code = code,
+                expires = Utility.AddTime(code_time)
+            };
+
+            string subject = "Reset code";
+            string message = $"Your code to reset the password in auth basic is: {code}";
+
+            await _context.UserResetCodes.AddAsync(new_code);
+            await _context.SaveChangesAsync();
+
+            switch (user.second_auth)
+            {
+                case 1:
+                    return BadRequest();
+                case 2:
+                    bool result = await _email.SendEmailAsync(user.email, subject, message);
+                    if(!result)
+                        throw new Exception("Fail Sending the email");
+                    return Ok(new GuidBody(){guid = user.uuid, text = "It was sent a message to your email with the code, check it."});
+                default:
+                    throw new Exception("Don't exists an 2fa");
+            } 
+        }
+        catch(Exception e)
+        {
+            System.Console.WriteLine(e);
+            return StatusCode(500);
+        }
+    }
+    /*
+    [HttpPost("resetpassword")]
+    public async Task<ActionResult> SendResetCode([FromBody] ResetBody body)
+    {
+        try
+        {
+            if(body == null)
+                return BadRequest();
+            if(!Utility.ValidateString(body.code))
+                return BadRequest(new OneText() { Text = "Isn't a code"});
+
+            User? user = await _context.Users.FirstOrDefaultAsync(p => p.uuid == body.guid);
+
+            if(user == null)
+                return NotFound();
+
+            SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
+                p => p.code == body.text && p.user_id == user.user_id
+                && !p.used && p.expires < DateTime.Now);
+
+            if (factor == null)
+                return NotFound();
+
+            string token_code = Utility.GenerateSafeString(24);
+            string token_hash = Utility.Sha256Encrypt(token_code);
+
+            UserToken new_token = new UserToken()
+            {
+                user_id = user.user_id,
+                token_hash = token_hash,
+                expires = Utility.AddTime(expire_token_time)
+            };
+
+            await _context.UserTokens.AddAsync(new_token);
+            await _context.SecondFactorCodes.Where(p => p.code_id == factor.code_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
+            await _context.SaveChangesAsync();
+
+            ReturnUser response = new ReturnUser()
+            {
+                uuid = user.uuid,
+                name_user = user.name_user,
+                email = user.email,
+                phone = user.phone,
+                is_active = user.is_active,
+                created_at = user.created_at,
+                token = token_code
+            };
+
+            return Ok(response);
+        }
+        catch(Exception e)
+        {
+            System.Console.WriteLine(e);
+            return StatusCode(500);
+        }
+    }
+*/
 }
