@@ -1,6 +1,0 @@
-public class UserRoles
-{
-    public Guid Id {get; set;}
-    public string? name {get; set;}
-    public string[]? roles {get; set;}
-}

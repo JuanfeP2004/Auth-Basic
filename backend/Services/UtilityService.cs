@@ -54,6 +54,7 @@ public class UtilityService
         for(int i = 0; i < length; i++)
         {
             bytes[i] = (byte)(((double)bytes[i]/256 * 93)+33);
+            if(bytes[i] == 92) bytes[i]++;
             s.Append(Convert.ToChar(bytes[i]));
         }
 

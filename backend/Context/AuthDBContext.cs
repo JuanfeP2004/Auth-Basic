@@ -7,16 +7,17 @@ public class AuthDBContext : DbContext
     }
 
     public DbSet<User> Users {get; set;}
-    public DbSet<UserRoles> UsersRoles {get; set;}
     public DbSet<Log> Logs {get; set;}
     public DbSet<Factor> Factors {get; set;}
     public DbSet<SecondFactorCode> SecondFactorCodes {get; set;}
     public DbSet<ResetCode> UserResetCodes {get; set;}
     public DbSet<UserToken> UserTokens {get; set;}
+    public DbSet<Role> Roles {get; set;}
+    public DbSet<UserRole> UserRoles {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        //modelBuilder.Entity<User>().ToTable("Users").HasNoKey();
+        modelBuilder.Entity<UserRole>().ToTable("UserRoles").HasNoKey();
     }
 }

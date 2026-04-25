@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 [ApiController]
 [Route("authapp/v1/[controller]")]
 public class LoginController : ControllerBase
 {
 
-    LoginService _loginService;    
-    public LoginController(LoginService loginService)
+    LoginService _loginService;
+    AuthService _authService; 
+    public LoginController(LoginService loginService, AuthService authService)
     {
+        _authService = authService;
         _loginService = loginService;
     }
 
@@ -54,7 +53,12 @@ public class LoginController : ControllerBase
         try
         {
             string? token_code = Request.Headers["AuthToken"];
-            (int, AuthResponse) response = await _loginService.Logout(uuid, token_code);
+
+            UserToken? userToken = await _authService.AuthenticateUser(uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            
+            (int, AuthResponse) response = await _loginService.Logout(userToken);
             return StatusCode(response.Item1, response.Item2);
         }
         catch

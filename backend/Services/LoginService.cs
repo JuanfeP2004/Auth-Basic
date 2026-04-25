@@ -3,19 +3,17 @@ using Microsoft.AspNetCore.Http.HttpResults;
 public class LoginService
 {
     UtilityService _utility;
-    AuthService _auth;
     ILogin _loginRepository;
 
     readonly TimeSpan code_time = new TimeSpan(0, 5, 0);
-    readonly TimeSpan token_time = new TimeSpan(0, 60, 0);
+    readonly TimeSpan token_time = new TimeSpan(0, 15, 0);
     readonly int password_length = 8;
     readonly string subjectLiteral2fa = "Auth Basic Authenticator Code";
     readonly string subjectLiteralReset = "Auth Basic Reset Code";
     
-    public LoginService(UtilityService utility, AuthService auth, ILogin loginRepository)
+    public LoginService(UtilityService utility, ILogin loginRepository)
     {
         _loginRepository = loginRepository;
-        _auth = auth;
         _utility = utility;
     }
     public async Task<(int, AuthResponse)> Login(Credentials credentials)
@@ -89,20 +87,13 @@ public class LoginService
             return (500, new StringResponse{Text = "A server error ocurred"});
         }
     }
-    public async Task<(int, AuthResponse)> Logout(Guid? uuid, string? token)
+    public async Task<(int, AuthResponse)> Logout(UserToken userToken)
     {
         try {
-            if(uuid is null)
-                return (400, new StringResponse{ Text = "Ins't an Id"});
-            if(!_utility.ValidateString(token))
-                return (401, new StringResponse{ Text = "You're not authenticated"});
-        
-            UserToken? userToken = await _auth.AuthenticateUser(uuid, token);
-            if(userToken is null)
-                return (401, new StringResponse{ Text = "Invalid authentication token"});
-        
+            if(!_utility.ValidateString(userToken.token_hash))
+                return (401, new StringResponse{ Text = "Isn't a token"});
+       
             await _loginRepository.RevokeToken(userToken.token_id);
-
             return (204, new AuthResponse{});
         }
         catch

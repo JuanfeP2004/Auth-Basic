@@ -1,8 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
-using System.Security.Cryptography;
-using System.Text;
 
 [ApiController]
 [Route("authapp/v1/[controller]")]

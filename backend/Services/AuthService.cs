@@ -3,7 +3,7 @@ public class AuthService
     IAuth _authRepository;
     UtilityService _utility;
 
-    TimeSpan refresh_time = new TimeSpan(0, 60, 0);
+    TimeSpan refresh_time = new TimeSpan(0, 15, 0);
 
     public AuthService(IAuth authRepository, UtilityService utility)
     {
@@ -30,6 +30,24 @@ public class AuthService
             DateTime refresh = DateTime.Now.Add(refresh_time);
             await _authRepository.RefreshToken(userToken.token_id, refresh);
             return userToken;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+
+    public async Task<bool> AuthorizeUser(UserToken token, string? role)
+    {
+        try
+        {
+            if(!_utility.ValidateString(role))
+                return false;
+            
+            if(await _authRepository.FindUserRole(token.user_id, role) is false)
+                return false;
+
+            return true;
         }
         catch
         {

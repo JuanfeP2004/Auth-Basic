@@ -49,4 +49,23 @@ public class AuthRepository : IAuth
             throw new Exception();
         }
     }
+
+    public async Task<bool> FindUserRole(int user_id, string? role_name)
+    {
+        try
+        {
+            Role? role = await _context.Roles.SingleOrDefaultAsync(p => p.role_name == role_name);
+            if(role is null) return false;
+            
+            UserRole? permission = await _context.UserRoles.SingleOrDefaultAsync(p => 
+                p.user_id == user_id && p.role_id == role.role_id);
+            if(permission is null) return false;
+
+            return true;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
 }
