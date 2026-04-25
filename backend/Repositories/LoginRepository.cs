@@ -12,7 +12,7 @@ public class LoginRepository : ILogin
         _context = context;
     }
 
-    public async Task<User?> FindUser(string email)
+    public async Task<User?> FindUser(string? email)
     {
         try
         {
@@ -26,7 +26,7 @@ public class LoginRepository : ILogin
         }
     }
 
-    public async Task<User?> FindUser(Guid uuid)
+    public async Task<User?> FindUser(Guid? uuid)
     {
         try
         {
@@ -40,7 +40,7 @@ public class LoginRepository : ILogin
         }
     }
 
-    public async Task Create2FACode(int id, string code, DateTime expires)
+    public async Task Create2FACode(int id, string? code, DateTime expires)
     {
         try 
         {
@@ -56,7 +56,7 @@ public class LoginRepository : ILogin
             throw new Exception();
         }
     }
-    public async Task<bool> Use2FACode(int user_id, string code)
+    public async Task<bool> Use2FACode(int user_id, string? code)
     {
         try {
             SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
@@ -77,7 +77,7 @@ public class LoginRepository : ILogin
         }
     }
 
-    public async Task CreateToken(int user_id, string token_hash, DateTime expires)
+    public async Task CreateToken(int user_id, string? token_hash, DateTime expires)
     {
         try {
             UserToken new_token = new UserToken()
@@ -109,17 +109,60 @@ public class LoginRepository : ILogin
             throw new Exception();
         }
     }
-    /*
-    string CreateResetCode(string email)
+
+    public async Task CreateResetCode(int user_id, string? code, DateTime expires)
     {
-        
+        try
+        {
+            await _context.UserResetCodes.AddAsync(new ResetCode
+            {
+                user_id = user_id,
+                code = code,
+                expires = expires
+            });
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
     }
-    string SendResetCode(string email)
+    public async Task<bool> UseResetCode(int user_id, string? code)
     {
+        try
+        {
+            ResetCode? reset = await _context.UserResetCodes.FirstOrDefaultAsync(
+                p => p.code == code && p.user_id == user_id
+                && !p.used && p.expires < DateTime.Now);
         
+            if(reset is null)
+                return false;
+        
+            await _context.UserResetCodes.Where(p => p.code_id == reset.code_id).
+                ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch
+        {
+            throw new Exception();
+        }
     }
 
-    */
+    public async Task ResetPassword(int user_id, string? password_hash)
+    {
+        try
+        {
+            await _context.Users.Where(p => p.user_id == user_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.password_hash, e => password_hash));
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+
     public async Task SendEmail(string email, string subject, string message)
     {
         bool result = await _email.SendEmailAsync(email, subject, message);
