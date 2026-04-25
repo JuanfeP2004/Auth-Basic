@@ -22,7 +22,7 @@ public class LoginRepository : ILogin
         }
         catch
         {
-            throw new Exception("Something Went Wrong");
+            throw new Exception();
         }
     }
 
@@ -36,7 +36,7 @@ public class LoginRepository : ILogin
         }
         catch
         {
-            throw new Exception("Something Went Wrong");
+            throw new Exception();
         }
     }
 
@@ -53,41 +53,63 @@ public class LoginRepository : ILogin
             await _context.SaveChangesAsync();
         } catch
         {
-            throw new Exception("Something Went Wrong");
+            throw new Exception();
         }
     }
     public async Task<bool> Use2FACode(int user_id, string code)
     {
-        SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
-            p => p.code == code && p.user_id == user_id
-            && !p.used && p.expires < DateTime.Now);
+        try {
+            SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
+                p => p.code == code && p.user_id == user_id
+                && !p.used && p.expires < DateTime.Now);
         
-        if(factor is null)
-            return false;
+            if(factor is null)
+                return false;
         
-        await _context.SecondFactorCodes.Where(p => p.code_id == factor.code_id).
-            ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
-        await _context.SaveChangesAsync();
-        return true;
+            await _context.SecondFactorCodes.Where(p => p.code_id == factor.code_id).
+                ExecuteUpdateAsync(s => s.SetProperty(e => e.used, e => true));
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch
+        {
+            throw new Exception();
+        }
     }
 
     public async Task CreateToken(int user_id, string token_hash, DateTime expires)
     {
-        UserToken new_token = new UserToken()
-            {
-                user_id = user_id,
-                token_hash = token_hash,
-                expires = expires
-            };
+        try {
+            UserToken new_token = new UserToken()
+                {
+                    user_id = user_id,
+                    token_hash = token_hash,
+                    expires = expires
+                };
 
-        await _context.UserTokens.AddAsync(new_token);
-        await _context.SaveChangesAsync();
+            await _context.UserTokens.AddAsync(new_token);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+
+    public async Task RevokeToken(int token_id)
+    {
+        try
+        {
+            await _context.UserTokens.Where(p => p.token_id == token_id).
+            ExecuteUpdateAsync(s => s.SetProperty(e => e.revoked, e => true));
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
     }
     /*
-    void Logout(string token_hash)
-    {
-        
-    }
     string CreateResetCode(string email)
     {
         

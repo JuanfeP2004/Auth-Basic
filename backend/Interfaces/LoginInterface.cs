@@ -5,8 +5,10 @@ public interface ILogin
     public Task Create2FACode(int id, string code, DateTime expires);
     public Task<bool> Use2FACode(int user_id, string code);
     public Task CreateToken(int user_id, string token_hash, DateTime expires);
+    
+    public Task RevokeToken(int token_id);
+
     /*
-    void Logout(string token_hash);
     string CreateResetCode(string email);
     string SendResetCode(string email);
     */

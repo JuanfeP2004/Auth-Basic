@@ -11,6 +11,9 @@ builder.Services.AddSingleton<EmailContext>();
 builder.Services.AddSingleton<AuthBasic>();
 builder.Services.AddScoped<UtilityService>();
 
+builder.Services.AddScoped<IAuth, AuthRepository>();
+builder.Services.AddScoped<AuthService>();
+
 builder.Services.AddScoped<ILogin, LoginRepository>();
 builder.Services.AddScoped<LoginService>();
 

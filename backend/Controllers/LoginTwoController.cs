@@ -48,32 +48,23 @@ public class LoginTwoController : ControllerBase
             return StatusCode(500);
         }
     }
-    /*
+
     [HttpDelete("logout/{uuid:Guid}")]
-    public async Task<ActionResult> Logout(Guid uuid)
+    public async Task<ActionResult> Logout(Guid? uuid)
     {
         try
         {
             string? token_code = Request.Headers["AuthToken"];
-            if(!Utility.ValidateString(token_code))
-                return BadRequest();
-            UserToken? token = await _auth.AutheticateUser(_context, token_code, uuid);
-            if(token == null)
-                return Unauthorized();
-
-            await _context.UserTokens.Where(p => p.token_id == token.token_id).
-            ExecuteUpdateAsync(s => s.SetProperty(e => e.revoked, e => true));
-            await _context.SaveChangesAsync();
-
-            return NoContent();       
+            (int, AuthResponse) response = await _loginService.Logout(uuid, token_code);
+            return StatusCode(response.Item1, response.Item2);
         }
-        catch(Exception e)
+        catch
         {
-            System.Console.WriteLine(e);
             return StatusCode(500);
         }
     }
 
+    /*
     [HttpPost("sendresetcode")]
     public async Task<ActionResult> CreateResetCode([FromBody] OneText body)
     {
