@@ -8,7 +8,7 @@ var connectionString = builder.Configuration.GetConnectionString("SqlContext");
 // Add services to the container.
 builder.Services.AddDbContext<AuthDBContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddSingleton<EmailContext>();
-builder.Services.AddSingleton<AuthBasic>();
+
 builder.Services.AddScoped<UtilityService>();
 
 builder.Services.AddScoped<IAuth, AuthRepository>();
