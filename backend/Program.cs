@@ -16,6 +16,8 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddScoped<ILogin, LoginRepository>();
 builder.Services.AddScoped<LoginService>();
+builder.Services.AddScoped<IUser, UserRepository>();
+builder.Services.AddScoped<UserService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
