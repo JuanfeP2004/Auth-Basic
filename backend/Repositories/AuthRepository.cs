@@ -27,7 +27,8 @@ public class AuthRepository : IAuth
         try
         {
             UserToken? token = await _context.UserTokens.SingleOrDefaultAsync(p => p.token_hash == token_hash 
-                && p.user_id == user_id && p.expires < DateTime.Now && !p.revoked);
+                && p.user_id == user_id && DateTime.Now < p.expires.AddHours(5) && !p.revoked);
+            
             if(token == null) return null;
             return token;
         }

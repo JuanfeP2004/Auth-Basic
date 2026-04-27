@@ -61,7 +61,7 @@ public class LoginRepository : ILogin
         try {
             SecondFactorCode? factor = await _context.SecondFactorCodes.FirstOrDefaultAsync(
                 p => p.code == code && p.user_id == user_id
-                && !p.used && p.expires < DateTime.Now);
+                && !p.used && DateTime.Now < p.expires.AddHours(5));
         
             if(factor is null)
                 return false;
@@ -133,7 +133,7 @@ public class LoginRepository : ILogin
         {
             ResetCode? reset = await _context.UserResetCodes.FirstOrDefaultAsync(
                 p => p.code == code && p.user_id == user_id
-                && !p.used && p.expires < DateTime.Now);
+                && !p.used && DateTime.Now < p.expires.AddHours(5));
         
             if(reset is null)
                 return false;
