@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 [Route("authapp/v1/[controller]")]
 public class UserController : ControllerBase
 {
-    private readonly UserService _userService;
+    UserService _userService;
+    AuthService _authService;
 
-    public UserController(UserService userService)
+    public UserController(UserService userService, AuthService authService)
     {
         _userService = userService;
+        _authService = authService;
     }
 
     [HttpPost]
@@ -28,8 +30,23 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("changepassword")]
-    public async Task<ActionResult> ChangePassword()
+    public async Task<ActionResult> ChangePassword([FromBody] SendCodeBody body)
     {
-        return Ok();
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.Uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.ChangePassword(body.Uuid, body.Code);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
     }
 }

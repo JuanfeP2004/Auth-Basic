@@ -24,6 +24,19 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
+    public async Task<User?> FindUser(Guid? uuid)
+    {
+        try
+        {
+            User? user = await _context.Users.SingleOrDefaultAsync(p => p.uuid == uuid);
+            if (user is null) return null;
+            return user;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
     public async Task CreateUser(User user)
     {
         try
@@ -45,6 +58,19 @@ public class UserRepository : IUser
                 p => text.ToUpper() == p.factor_name.ToUpper());
             if(factor is null) return null;
             return factor;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+
+    public async Task ModifyPassword(int user_id, string? new_password)
+    {
+        try {
+            await _context.Users.Where(p => p.user_id == user_id)
+                .ExecuteUpdateAsync(s => s.SetProperty(s => s.password_hash, e => new_password));
+            await _context.SaveChangesAsync();
         }
         catch
         {

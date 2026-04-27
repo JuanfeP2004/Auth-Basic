@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
 public class UserService
@@ -66,6 +67,32 @@ public class UserService
         catch
         {
             return (500, new StringResponse {Text = "A server error ocurred"});
+        }
+    }
+
+    public async Task<(int, AuthResponse)> ChangePassword(Guid? uuid, string? new_password)
+    {
+        try
+        {
+            if(uuid is null)
+                return (400, new StringResponse{Text = "Ins't a Guid"});
+            if(!_utility.ValidateString(new_password))
+                return (400, new StringResponse{Text = "Ins't a password"});
+            if(new_password.Length < password_length)
+                return (400, new StringResponse{Text = $"Password is too short, it must be at least {password_length} characters long"});
+        
+            User? user = await _userRepository.FindUser(uuid);
+            if(user is null)
+                return (404, new StringResponse{Text = "Doesn't exist a user in the database"});
+            
+            string? password_hash = _utility.Sha256Encrypt(new_password, user.salt_char);
+            await _userRepository.ModifyPassword(user.user_id, password_hash);
+
+            return (200, new StringResponse {Text = "Modified password successfully"});
+        }
+        catch
+        {
+            return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
 }
