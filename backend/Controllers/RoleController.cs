@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 [ApiController]
+[EnableRateLimiting("applimiter")]
 [Route("authapp/v1/[controller]")]
 public class RoleController : ControllerBase
 {

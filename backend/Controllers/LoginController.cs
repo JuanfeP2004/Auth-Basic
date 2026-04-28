@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 [ApiController]
+[EnableRateLimiting("authlimiter")]
 [Route("authapp/v1/[controller]")]
 public class LoginController : ControllerBase
 {
