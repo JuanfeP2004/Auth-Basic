@@ -52,6 +52,28 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpPut("change2fa")]
+    public async Task<ActionResult> Change2FA([FromBody] SendCodeBody body)
+    {
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.Uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.Change2FA(userToken.user_id, body.Code);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
+
+
     [HttpPut("lockuser")]
     public async Task<ActionResult> LockUser([FromBody] DoubleGuidBody body)
     {

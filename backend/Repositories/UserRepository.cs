@@ -87,4 +87,17 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
+
+    public async Task ModifySecondFactor(int user_id, int factor_id)
+    {
+        try {
+            await _context.Users.Where(p => p.user_id == user_id)
+                .ExecuteUpdateAsync(s => s.SetProperty(s => s.second_auth, e => factor_id));
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
 }

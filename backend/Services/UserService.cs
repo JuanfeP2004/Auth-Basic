@@ -95,6 +95,26 @@ public class UserService
             return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
+        public async Task<(int, AuthResponse)> Change2FA(int user_id, string? new_factor)
+    {
+        try
+        {
+            if(!_utility.ValidateString(new_factor))
+                return (400, new StringResponse{Text = "Ins't a password"});
+            
+            Factor? factor = await _userRepository.FindAuthFactor(new_factor);
+            if(factor is null)
+                return (404, new StringResponse{Text = "Doesn't exist that authentication factor in the database"});
+            
+            await _userRepository.ModifySecondFactor(user_id, factor.factor_id);
+
+            return (200, new StringResponse {Text = "Modified second factor method successfully"});
+        }
+        catch
+        {
+            return (500, new StringResponse{Text="A server error ocurred"});
+        }
+    }
     public async Task<(int, AuthResponse)> LockUser(Guid? uuid)
     {
         try

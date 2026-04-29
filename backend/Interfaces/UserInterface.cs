@@ -6,4 +6,6 @@ public interface IUser
     public Task<Factor?> FindAuthFactor(string? text);
     public Task ModifyPassword(int user_id, string? new_password);
     public Task ModifyIsActive(int user_id, bool is_active);
+
+    public Task ModifySecondFactor(int user_id, int factor_id);
 }
