@@ -32,4 +32,46 @@ public class RoleController : ControllerBase
             return StatusCode(500);
         }
     }
+
+    [HttpGet("role2/{uuid:Guid}")]
+    public async Task<IActionResult> DoRoleTwo(Guid? uuid)
+    {
+        string role_required = "Role2";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse{ Text = "Action Denegate"});
+            
+            return Ok(new StringResponse {Text = "You did Action B"});
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
+
+    [HttpGet("role3/{uuid:Guid}")]
+    public async Task<IActionResult> DoRoleThree(Guid? uuid)
+    {
+        string role_required = "Role3";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse{ Text = "Action Denegate"});
+            
+            return Ok(new StringResponse {Text = "You did Action C"});
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
 }

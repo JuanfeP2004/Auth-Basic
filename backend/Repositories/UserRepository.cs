@@ -49,7 +49,6 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
-
     public async Task<Factor?> FindAuthFactor(string? text)
     {
         try
@@ -64,7 +63,6 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
-
     public async Task ModifyPassword(int user_id, string? new_password)
     {
         try {
@@ -77,7 +75,6 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
-
     public async Task ModifyIsActive(int user_id, bool is_active)
     {
         try {

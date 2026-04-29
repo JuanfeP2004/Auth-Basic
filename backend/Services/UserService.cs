@@ -70,7 +70,6 @@ public class UserService
             return (500, new StringResponse {Text = "A server error ocurred"});
         }
     }
-
     public async Task<(int, AuthResponse)> ChangePassword(Guid? uuid, string? new_password)
     {
         try
@@ -96,7 +95,6 @@ public class UserService
             return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
-
     public async Task<(int, AuthResponse)> LockUser(Guid? uuid)
     {
         try
@@ -119,7 +117,6 @@ public class UserService
             return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
-
     public async Task<(int, AuthResponse)> UnlockUser(Guid? uuid)
     {
         try
