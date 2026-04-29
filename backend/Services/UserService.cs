@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
 
 public class UserService
 {
@@ -89,6 +90,53 @@ public class UserService
             await _userRepository.ModifyPassword(user.user_id, password_hash);
 
             return (200, new StringResponse {Text = "Modified password successfully"});
+        }
+        catch
+        {
+            return (500, new StringResponse{Text="A server error ocurred"});
+        }
+    }
+
+    public async Task<(int, AuthResponse)> LockUser(Guid? uuid)
+    {
+        try
+        {
+            if(uuid is null)
+                return (400, new StringResponse{Text = "Ins't a Guid"});
+            
+            User? user = await _userRepository.FindUser(uuid);
+            if(user is null)
+                return (404, new StringResponse{Text = "Doesn't exist a user in the database"});
+            if(user.name_user == "Admin")
+                return (404, new StringResponse{Text = "You can't lock admin user"});
+            
+            await _userRepository.ModifyIsActive(user.user_id, false);
+
+            return (200, new StringResponse {Text = $"Locked user {user.name_user} successfully"});
+        }
+        catch
+        {
+            return (500, new StringResponse{Text="A server error ocurred"});
+        }
+    }
+
+    public async Task<(int, AuthResponse)> UnlockUser(Guid? uuid)
+    {
+        try
+        {
+            if(uuid is null)
+                return (400, new StringResponse{Text = "Ins't a Guid"});
+            
+            User? user = await _userRepository.FindUser(uuid);
+            if(user is null)
+                return (404, new StringResponse{Text = "Doesn't exist a user in the database"});
+            if(user.name_user == "Admin")
+                return (404, new StringResponse{Text = "You can't unlock admin user"});
+            
+
+            await _userRepository.ModifyIsActive(user.user_id, true);
+
+            return (200, new StringResponse {Text = $"Unlocked user {user.name_user} successfully"});
         }
         catch
         {

@@ -55,7 +55,8 @@ public class AuthRepository : IAuth
     {
         try
         {
-            Role? role = await _context.Roles.SingleOrDefaultAsync(p => p.role_name == role_name);
+            Role? role = await _context.Roles.SingleOrDefaultAsync(p => 
+                p.role_name.ToLower() == role_name.ToLower());
             if(role is null) return false;
             
             UserRole? permission = await _context.UserRoles.SingleOrDefaultAsync(p => 

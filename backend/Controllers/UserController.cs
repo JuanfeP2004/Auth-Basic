@@ -51,4 +51,52 @@ public class UserController : ControllerBase
             return StatusCode(500);
         }
     }
+
+    [HttpPut("lockuser")]
+    public async Task<ActionResult> LockUser([FromBody] DoubleGuidBody body)
+    {
+        string role_required = "LockUser";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.Uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse { Text = "Action Denegated"});
+
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.LockUser(body.Tarjet);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
+
+     [HttpPut("unlockuser")]
+    public async Task<ActionResult> UnlockUser([FromBody] DoubleGuidBody body)
+    {
+        string role_required = "UnlockUser";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.Uuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse { Text = "Action Denegated"});
+
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.UnlockUser(body.Tarjet);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
 }

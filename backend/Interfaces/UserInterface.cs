@@ -5,4 +5,5 @@ public interface IUser
     public Task CreateUser(User template);
     public Task<Factor?> FindAuthFactor(string? text);
     public Task ModifyPassword(int user_id, string? new_password);
+    public Task ModifyIsActive(int user_id, bool is_active);
 }

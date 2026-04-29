@@ -77,4 +77,17 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
+
+    public async Task ModifyIsActive(int user_id, bool is_active)
+    {
+        try {
+            await _context.Users.Where(p => p.user_id == user_id)
+                .ExecuteUpdateAsync(s => s.SetProperty(s => s.is_active, e => is_active));
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
 }
