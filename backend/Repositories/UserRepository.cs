@@ -24,6 +24,19 @@ public class UserRepository : IUser
             throw new Exception();
         }
     }
+    public async Task<User?> FindUser(int user_id)
+    {
+        try
+        {
+            User? user = await _context.Users.SingleOrDefaultAsync(p => p.user_id == user_id);
+            if (user is null) return null;
+            return user;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
     public async Task<User?> FindUser(Guid? uuid)
     {
         try
@@ -93,6 +106,46 @@ public class UserRepository : IUser
         try {
             await _context.Users.Where(p => p.user_id == user_id)
                 .ExecuteUpdateAsync(s => s.SetProperty(s => s.second_auth, e => factor_id));
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+
+    public async Task<Role?> GetRole(string? name_role)
+    {
+        try
+        {
+            Role? role = await _context.Roles.SingleOrDefaultAsync(p => 
+                p.role_name.ToLower() == name_role.ToLower());
+            if(role is null) return null;
+            return role;
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+    public async Task AddRole(int user_id, int role_id)
+    {
+        try
+        {
+            await _context.Database.ExecuteSqlAsync($"INSERT dbo.UserRoles (user_id, role_id) VALUES ({user_id}, {role_id})");
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            throw new Exception();
+        }
+    }
+    public async Task RemoveRole(int user_id, int role_id)
+    {
+        try
+        {
+            await _context.UserRoles.Where(p => p.user_id == user_id && p.role_id == role_id)
+                .ExecuteDeleteAsync();
             await _context.SaveChangesAsync();
         }
         catch

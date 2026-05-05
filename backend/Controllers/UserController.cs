@@ -43,7 +43,7 @@ public class UserController : ControllerBase
             
             if(body == null)
                 return BadRequest();
-            (int, AuthResponse) response = await _userService.ChangePassword(body.Uuid, body.Code);
+            (int, AuthResponse) response = await _userService.ChangePassword(userToken.user_id, body.Code);
             return StatusCode(response.Item1, response.Item2);
         }
         catch
@@ -98,7 +98,7 @@ public class UserController : ControllerBase
         }
     }
 
-     [HttpPut("unlockuser")]
+    [HttpPut("unlockuser")]
     public async Task<ActionResult> UnlockUser([FromBody] DoubleGuidBody body)
     {
         string role_required = "UnlockUser";
@@ -114,6 +114,54 @@ public class UserController : ControllerBase
             if(body == null)
                 return BadRequest();
             (int, AuthResponse) response = await _userService.UnlockUser(body.Tarjet);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
+
+    [HttpPost("addrole")]
+    public async Task<ActionResult> AddRole([FromBody] DoubleGuidStringBody body)
+    {
+        string role_required = "GiveRole";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.OwnUuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse { Text = "Action Denegated"});
+
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.AddRole(body.OtherUuid, body.Text);
+            return StatusCode(response.Item1, response.Item2);
+        }
+        catch
+        {
+            return StatusCode(500);
+        }
+    }
+
+    [HttpPost("removerole")]
+    public async Task<ActionResult> RemoveRole([FromBody] DoubleGuidStringBody body)
+    {
+        string role_required = "RemoveRole";
+        try
+        {
+            string? token_code = Request.Headers["AuthToken"];
+            UserToken? userToken = await _authService.AuthenticateUser(body.OwnUuid, token_code);
+            if(userToken is null)
+                return StatusCode(401, new StringResponse{ Text = "You're not authenticated"});
+            if(await _authService.AuthorizeUser(userToken, role_required) is false)
+                return StatusCode(403, new StringResponse { Text = "Action Denegated"});
+
+            if(body == null)
+                return BadRequest();
+            (int, AuthResponse) response = await _userService.RemoveRole(body.OtherUuid, body.Text);
             return StatusCode(response.Item1, response.Item2);
         }
         catch

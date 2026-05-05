@@ -70,18 +70,17 @@ public class UserService
             return (500, new StringResponse {Text = "A server error ocurred"});
         }
     }
-    public async Task<(int, AuthResponse)> ChangePassword(Guid? uuid, string? new_password)
+    public async Task<(int, AuthResponse)> ChangePassword(int user_id, string? new_password)
     {
         try
         {
-            if(uuid is null)
-                return (400, new StringResponse{Text = "Ins't a Guid"});
+
             if(!_utility.ValidateString(new_password))
                 return (400, new StringResponse{Text = "Ins't a password"});
             if(new_password.Length < password_length)
                 return (400, new StringResponse{Text = $"Password is too short, it must be at least {password_length} characters long"});
         
-            User? user = await _userRepository.FindUser(uuid);
+            User? user = await _userRepository.FindUser(user_id);
             if(user is null)
                 return (404, new StringResponse{Text = "Doesn't exist a user in the database"});
             
@@ -95,7 +94,7 @@ public class UserService
             return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
-        public async Task<(int, AuthResponse)> Change2FA(int user_id, string? new_factor)
+    public async Task<(int, AuthResponse)> Change2FA(int user_id, string? new_factor)
     {
         try
         {
@@ -160,4 +159,59 @@ public class UserService
             return (500, new StringResponse{Text="A server error ocurred"});
         }
     }
+    public async Task<(int, AuthResponse)> AddRole(Guid? uuid, string? name_role)
+    {
+        try
+        {
+            if(uuid is null)
+                return (400, new StringResponse{Text = "Ins't a Guid"});
+            if(!_utility.ValidateString(name_role))
+                return (400, new StringResponse{Text = "Ins't a Role"});
+
+            Role? role = await _userRepository.GetRole(name_role);
+            if(role is null)
+                return (400, new StringResponse{Text = "Role not found"});
+            User? user = await _userRepository.FindUser(uuid);
+            if(user is null)
+                return (400, new StringResponse{Text = "User not found"});
+            if(user.name_user == "Admin")
+                return (403, new StringResponse{Text = "You can't modify admin role"});
+            
+            await _userRepository.AddRole(user.user_id, role.role_id);
+            return (201, new StringResponse{Text = $"Granted {user.name_user} {role.role_name}"});
+
+        }
+        catch
+        {
+            return (500, new StringResponse {Text = "A server error ocurred"});
+        }
+    }
+
+    public async Task<(int, AuthResponse)> RemoveRole(Guid? uuid, string? name_role)
+    {
+        try
+        {
+            if(uuid is null)
+                return (400, new StringResponse{Text = "Ins't a Guid"});
+            if(!_utility.ValidateString(name_role))
+                return (400, new StringResponse{Text = "Ins't a Role"});
+
+            Role? role = await _userRepository.GetRole(name_role);
+            if(role is null)
+                return (400, new StringResponse{Text = "Role not found"});
+            User? user = await _userRepository.FindUser(uuid);
+            if(user is null)
+                return (400, new StringResponse{Text = "User not found"});
+            if(user.name_user == "Admin")
+                return (403, new StringResponse{Text = "You can't modify admin role"});
+            
+            await _userRepository.RemoveRole(user.user_id, role.role_id);
+            return (204, new StringResponse{Text = $"Removed {user.name_user} {role.role_name}"});
+        }
+        catch
+        {
+            return (500, new StringResponse {Text = "A server error ocurred"});
+        }
+    }
+
 }
